@@ -1,0 +1,208 @@
+---
+title: "Teaser Diversity PA Colombia"
+author: "Edgar Cifuentes"
+date: "18/02/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
+knitr::opts_knit$set(root.dir = '~/Proj/08_Diversity_PA_COL')
+```
+
+
+```{r load , include=FALSE}
+library(raster)  # Para trabajar con datos raster
+library(sf)      # Para trabajar con datos vectoriales
+Col <- st_simplify(st_read('data/00_colombia_admin/col_admbnda_adm0_mgn_itos_20200416'), 
+                   dTolerance = 1000)
+Colbuff <- st_as_sf(st_buffer(st_geometry(Col),dist = 100000))
+PNN <- st_simplify(st_transform(st_read('data/02X_PNN_WDPA Colombia_old/pnn_wdpa_Col.shp'), 4326), dTolerance = 1000)
+
+
+reptil.c <- st_read('data/01B_IUCN_COL/REPTILES_COL.shp')
+mammal.c <- st_read('data/01B_IUCN_COL/MAMMALS_COL.shp')
+amphib.c <- st_read('data/01B_IUCN_COL/AMPHIBIANS_COL.shp')
+
+```
+
+## IUCN data
+
+Estuve viendo los datos de la IUCN y descargé varios. Por ahora hice un procesamiento preliminar de los datos para reptiles, mamíferos y anfibios. Seleccioné las distribuciones de las especies que se intersectan con Colombia y luego las corté para la zona. Algunas distribuciones no se dejaban trabajar porque tenían geometrías inválidas entonces tuve que corregirlas. Tendría que ponerme a revisar los polígonos de peces que ya descargué y aves que aún no tengo porque es a través de Birdlife. Tendríamos que ver si nos hace falta o excluimos algún grupo.
+
+<br>
+
+## Richness maps {.tabset .tabset-pills}
+
+Saqué unos mapas de riqueza de especies de cada grupo para visualizar rápidamente. Sin embargo, no son versiones finales porque aún hay que limpar estos datos ya que hay especies con múltiples polígonos de diferentes categorías (eg, extant, extinct, possibly extant). Abajo hablo de eso.
+
+### Reptiles
+
+```{r rich_reptil, results='asis'}
+cat('Número Total de Especies:', length(unique(reptil.c$sci_name)),'\n')
+
+tl <- 'Reptiles'
+lyr=reptil.c
+plot(fasterize::fasterize(lyr,raster(Colbuff, res=.1), fun="sum"), col = hcl.colors(100), main=tl)
+plot(st_geometry(Col), add=T, border='grey40')
+plot(st_geometry(PNN), add=T, lwd=.4)
+
+```
+
+<br>
+
+### Mammals
+
+```{r rich_mammal, results='asis'}
+cat('Número Total de Especies:', length(unique(mammal.c$sci_name)),'\n')
+tl <- 'Mammals'
+lyr=mammal.c
+plot(fasterize::fasterize(lyr,raster(Colbuff, res=.1), fun="sum"), col = hcl.colors(100), main=tl)
+plot(st_geometry(Col), add=T, border='grey40')
+plot(st_geometry(PNN), add=T, lwd=.4)
+```
+
+<br>
+
+### Amphibians
+
+```{r rich_amphib, results='asis'}
+cat('Número Total de Especies:', length(unique(amphib.c$sci_name)),'\n')
+tl <- 'Amphibians'
+lyr=amphib.c
+plot(fasterize::fasterize(lyr,raster(Colbuff, res=.1), fun="sum"), col = hcl.colors(100), main=tl)
+plot(st_geometry(Col), add=T, border='grey40')
+plot(st_geometry(PNN), add=T, lwd=.4)
+```
+
+<br>
+
+## Species with multiple polygon legends {.tabset .tabset-pills}
+
+Tendremos que definir qué categorías de polígonos vamos a seleccionar y revisar también los otros grupos de especies (eg, peces) a ver si tienen más categorías y poder unificar todo. Acá se ven las diferentes categorías que están en estos 3 datasets (reptiles, mamíferos y anfibios):
+
+```{r echo=TRUE, eval=FALSE}
+table(IUCN$legend, IUCN$presence)
+```
+
+```{r}
+table(c(mammal.c$legend,amphib.c$legend,reptil.c$legend),c(mammal.c$presence,amphib.c$presence,reptil.c$presence))
+```
+
+<br> 
+
+Igual son relativamente pocas especies las que tienen ese múltiples polígonos, así que no es tan grave. Acá se pueden visualizar estas especies:
+
+```{r}
+library(htmlwidgets)
+library(slickR)
+```
+
+### Reptiles
+
+```{r results='asis'}
+fls <- list.files('plots/00_IUCN_multilegend/reptil', full.names = T)
+cat('Especies con multiples polígonos:', length(fls))
+
+
+slickR(obj = fls) + 
+  settings(dots = TRUE, autoplay = TRUE)
+```
+
+<br>
+
+### Mammals
+
+```{r results='asis'}
+fls <- list.files('plots/00_IUCN_multilegend/mammal', full.names = T)
+cat('Especies con multiples polígonos:', length(fls))
+slickR(obj = fls) + 
+  settings(dots = TRUE, autoplay = TRUE)
+```
+
+<br>
+
+### Amphibians
+
+```{r results='asis'}
+fls <- list.files('plots/00_IUCN_multilegend/amphib', full.names = T)
+cat('Especies con multiples polígonos:', length(fls))
+slickR(obj = fls) + 
+  settings(dots = TRUE, autoplay = TRUE)
+```
+
+<br>
+
+##
+
+<br>
+
+
+## Zonal stats {.tabset .tabset-pills}
+
+Por último, saqué unos polígonos viejos de PNNs y saqué unas mini estadísticas rápidas para cada grupo por cada PNN: número min de especies, n max, especies promedio. Lo próximo es hablar a ver qué números queremos sacar.
+
+### Reptiles
+
+```{r warning=FALSE}
+reptil.rich <- fasterize::fasterize(reptil.c,raster(Colbuff, res=.1), fun="sum")
+reptil.categ <- fasterize::fasterize(reptil.c,raster(Colbuff, res=.1), fun="sum", by = 'category')
+extrPNN.rich <- extract(reptil.rich, as(PNN[!st_is_empty(PNN),], 'Spatial'))
+extrPNN.categ <- extract(reptil.categ, as(PNN[!st_is_empty(PNN),], 'Spatial'))
+
+maxspp <- sapply(extrPNN.categ, function(x) apply(x,2,max, na.rm = T))
+maxspp[is.infinite(maxspp)] <- 0
+
+df <- data.frame(PNN = PNN$NAME[!st_is_empty(PNN)],
+                 spp_all = sapply(extrPNN.rich, max),
+                 spp_min = sapply(extrPNN.rich, min),
+                 spp_mean = round(sapply(extrPNN.rich, mean),1),
+                 data.frame(t(maxspp)))
+library(DT)
+DT::datatable(df ,class="cell-border stripe",rownames = F,filter="none",options = list(autoWidth=T, dom="Bfrtip")) 
+```
+
+### Mammals
+
+```{r warning=FALSE}
+mammal.rich <- fasterize::fasterize(mammal.c,raster(Colbuff, res=.1), fun="sum")
+mammal.categ <- fasterize::fasterize(mammal.c,raster(Colbuff, res=.1), fun="sum", by = 'category')
+extrPNN.rich <- extract(mammal.rich, as(PNN[!st_is_empty(PNN),], 'Spatial'))
+extrPNN.categ <- extract(mammal.categ, as(PNN[!st_is_empty(PNN),], 'Spatial'))
+
+maxspp <- sapply(extrPNN.categ, function(x) apply(x,2,max, na.rm = T))
+maxspp[is.infinite(maxspp)] <- 0
+
+df <- data.frame(PNN = PNN$NAME[!st_is_empty(PNN)],
+                 spp_all = sapply(extrPNN.rich, max),
+                 spp_min = sapply(extrPNN.rich, min),
+                 spp_mean = round(sapply(extrPNN.rich, mean),1),
+                 data.frame(t(maxspp)))
+library(DT)
+DT::datatable(df ,class="cell-border stripe",rownames = F,filter="none",options = list(autoWidth=T, dom="Bfrtip")) 
+```
+
+### Amphibians
+
+```{r warning=FALSE}
+amphib.rich <- fasterize::fasterize(amphib.c,raster(Colbuff, res=.1), fun="sum")
+amphib.categ <- fasterize::fasterize(amphib.c,raster(Colbuff, res=.1), fun="sum", by = 'category')
+extrPNN.rich <- extract(amphib.rich, as(PNN[!st_is_empty(PNN),], 'Spatial'))
+extrPNN.categ <- extract(amphib.categ, as(PNN[!st_is_empty(PNN),], 'Spatial'))
+
+maxspp <- sapply(extrPNN.categ, function(x) apply(x,2,max, na.rm = T))
+maxspp[is.infinite(maxspp)] <- 0
+
+df <- data.frame(PNN = PNN$NAME[!st_is_empty(PNN)],
+                 spp_all = sapply(extrPNN.rich, max),
+                 spp_min = sapply(extrPNN.rich, min),
+                 spp_mean = round(sapply(extrPNN.rich, mean),1),
+                 data.frame(t(maxspp)))
+library(DT)
+DT::datatable(df ,class="cell-border stripe",rownames = F,filter="none",options = list(autoWidth=T, dom="Bfrtip")) 
+```
+
+## Conclusión
+
+Hay que limpiar bien los datos pero en general veo factible hacer estos análisis. Tocaría es hablar bien para definir las preguntas, labores y ver qué números sacar de los datos, figuras, etc.
+

@@ -1,0 +1,24 @@
+name: "Diversidad AP Colombia"
+output_dir: "docs"
+navbar:
+  title: "Diversidad Areas Protegidas Colombia"
+  left:
+    - text: "Teaser"
+      href: index.html
+    # - text: "Field: AGB, BA & ρ"
+    #   href: 01_agb.html
+    # - text: "Lidar: TCH & Cover10"
+    #   href: 02_tch.html
+    # # - text: "BA & ρ"
+    #   href: 03_ba.html
+    # - text: "Environ. Variables"
+    #   href: 04_env.html
+    # - text: "Modelling"
+    #   href: 05_models.html
+# output: word_document
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
+    number_sections: FALSE
+    secnumdepth: 2

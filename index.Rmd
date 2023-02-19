@@ -39,7 +39,7 @@ Saqué unos mapas de riqueza de especies de cada grupo para visualizar rápidame
 ### Reptiles
 
 ```{r rich_reptil, results='asis'}
-cat('Número Total de Especies:', length(unique(reptil.c$sci_name)),'\n')
+cat('Número Total de Especies:', length(unique(reptil.c$sci_name)),'\n\n')
 
 tl <- 'Reptiles'
 lyr=reptil.c
@@ -54,7 +54,7 @@ plot(st_geometry(PNN), add=T, lwd=.4)
 ### Mammals
 
 ```{r rich_mammal, results='asis'}
-cat('Número Total de Especies:', length(unique(mammal.c$sci_name)),'\n')
+cat('Número Total de Especies:', length(unique(mammal.c$sci_name)),'\n\n')
 tl <- 'Mammals'
 lyr=mammal.c
 plot(fasterize::fasterize(lyr,raster(Colbuff, res=.1), fun="sum"), col = hcl.colors(100), main=tl)
@@ -67,7 +67,7 @@ plot(st_geometry(PNN), add=T, lwd=.4)
 ### Amphibians
 
 ```{r rich_amphib, results='asis'}
-cat('Número Total de Especies:', length(unique(amphib.c$sci_name)),'\n')
+cat('Número Total de Especies:', length(unique(amphib.c$sci_name)),'\n\n')
 tl <- 'Amphibians'
 lyr=amphib.c
 plot(fasterize::fasterize(lyr,raster(Colbuff, res=.1), fun="sum"), col = hcl.colors(100), main=tl)

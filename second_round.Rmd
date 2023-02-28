@@ -1,0 +1,264 @@
+---
+title: "Second round"
+author: "Edgar Cifuentes"
+date: "28/02/2023"
+output: 
+  html_document:
+    toc: yes
+    toc_float: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE, warning = FALSE)
+knitr::opts_knit$set(root.dir = '~/Proj/08_Diversity_PA_COL')
+```
+
+
+```{r load , include=FALSE}
+library(raster)  # Para trabajar con datos raster
+library(sf)      # Para trabajar con datos vectoriales
+library(leaflet) # Para visualizar mapas interactivos
+
+Col <- st_geometry(st_read('data/00A_colombia_admin_clean/Colombia_border.shp'))
+ColMar <- st_geometry(st_read('data/00A_colombia_admin_clean/Colombia_with_Marine_border.shp'))
+rbase <- raster('data/00A_colombia_admin_clean/base_raster_001deg.tif')
+
+```
+
+# Raw data
+
+## Rangos de distribución spp (IUCN + BirdLife)
+
+Hasta el momento tengo todos los datos de IUCN de vertebrados excepto aves que viene de BirdLife. Seleccioné rangos que se intersectan con el polígono de Colombia
+
+### IUCN
+Hasta el momento tengo todos los datos de IUCN de vertebrados excepto aves que viene de BirdLife.Estos son los datos que descargué:
+
+| **Main Dataset**  | **Specific Group(s)**                                                                                      | **Description and Species lists**                                                                                 | **Download**   |
+|-------------------|------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|----------------|
+| Mammals           | Species from the class Mammalia.                                                                           | Mammals found within freshwater systems, marine and terrestrial habitats.                                         | polygon 1.06GB |
+| Amphibians        | Species from the class Amphibia.                                                                           | Species from the orders Anura (Tailless), Caudata (Tailed) & Gymnophiona (Caecilian).                             | polygon 1.03GB |
+| Reptiles          | Species from the class Reptilia                                                                            | Species from the order Crocodylia (Crocodiles and Alligators), Squamata (Scaled Reptiles) & Turtles (Testudines). | polygon 1.36GB |
+| Fishes            | Angelfishes                                                                                                | Species from the family Pomacanthidae.                                                                            | polygon <100MB |
+| Fishes            | Blennies                                                                                                   | Species from the family Blenniidae.                                                                               | polygon 290MB  |
+| Fishes            | Bonefishes and Tarpons                                                                                     | Species from the families Albulidae, Elopidae and Megalopidae.                                                    | polygon <50MB  |
+| Fishes            | Butterflyfishes                                                                                            | Species from the family Chaetodontidae.                                                                           | polygon <250MB |
+| Fishes            | Chondrichthyes (sharks, rays and chimaeras)                                                                | Species from the class Chondrichthyes.                                                                            | polygon 439MB  |
+| Fishes            | Clupeiformes                                                                                               | Species from the order Clupeiformes.                                                                              | polygon <250MB |
+| Fishes            | Groupers                                                                                                   | Species from the family Epinephelidae.                                                                            | polygon 281MB  |
+| Fishes            | Hagfishes                                                                                                  | Species from the class Myxini.                                                                                    | polygon <10MB  |
+| Fishes            | Pufferfishes                                                                                               | Species from the family Tetraodontidae.                                                                           | polygon <250MB |
+| Fishes            | Seabreams, Porgies and Picarels                                                                            | Species from the families Sparidae and Centracanthidae.                                                           | polygon <100MB |
+| Fishes            | Surgeonfishes, Tangs and Unicornfishes                                                                     | Species from the family Acanthuridae.                                                                             | polygon <250MB |
+| Fishes            | Syngnathiform fishes (Seahorses & Pipefishes, Ghost Pipefishes, Shrimpfishes, Trumpetfishes, Cornetfishes) | Species from the families Syngnathidae, Aulostomidae, Centriscidae, Fistulariidae and Solenostomidae.             | polygon <250MB |
+| Fishes            | Tunas and Billfishes                                                                                       | Species from the family Istiophoridae, Scombridae and Xiphiidae.                                                  | polygon <250MB |
+| Fishes            | Wrasses and Parrotfishes                                                                                   | Species from the families: Labridae and Scaridae.                                                                 | polygon 376MB  |
+| Fishes            | Marine Fishes (not comprehensive)                                                                          | Species from the above groups which are found in marine habitats.                                                 | polygon 2.37GB |
+| Freshwater Groups | Fishes (not comprehensive)                                                                                 | Species from the class Actinopterygii found within freshwater systems.                                            | polygon 1.85GB |
+
+<br>
+
+Seleccioné los polígonos que se intersectan con el de Colombia (incluyendo zonas marinas por silas) y los filtré por la variable `presence` que fuera igual a 1 (ie, Extant). Al final corté los rangos de distribución con el polígono de Colombia y agrupé las especies por clase taxonómica. 
+
+Es decir que quedaron las siguentes categorías:
+
+```{r}
+iucn.COLcsv <- do.call(rbind,lapply(list.files('data/01B_IUCN_COL_byclass/', pattern = '.csv', full.names = T), read.csv))
+table(iucn.COLcsv$legend, iucn.COLcsv$class)
+```
+
+Y en total hay estas especies:
+
+```{r}
+table(iucn.COLcsv$class)
+```
+
+### Birdlife
+
+Ayer me llegaron los datos de BirdLife (>3GB). Estos datos los tengo en pausa porque me mandaron un geodatabase (.gdb) y eso es un rollo leerlos con mi versión de R. Toca con ArcGIS o QGIS y la verdad es que no los uso. Igual ya le estoy dando solución.
+
+## Areas de estudio
+
+### Areas protegidas, Comunidades Negras y Resguardos Indígenas
+
+Del SINAP no me han enviado nada, entonces lo que hice fue usar los datos de [protected planet](https://www.protectedplanet.net/country/COL) WDPA para Colombia y seleccioné sólo los polígonos de Parques Nacionales Naturales.Estos datos son los que están en el link que nos envió Jose Manuel. Los polígonos están mas bien limpios entonces no hubo mucho que hacer más que validar unas geometrías. 
+
+```{r, include=FALSE}
+lf.wdpa <- st_read('data/03B_study_areas_richspp/wdpa_spp_rich_IUCNcateg.shp')
+lf.cn <- st_read('data/03B_study_areas_richspp/cn_spp_rich_IUCNcateg.shp')
+lf.ri <- st_read('data/03B_study_areas_richspp/ri_spp_rich_IUCNcateg.shp')
+```
+
+
+```{r leafStudyArea, cache=FALSE}
+library(leaflet)
+map <- leaflet() %>%
+  # addTiles() %>%
+  addProviderTiles(providers$Stamen.TonerLite) %>%
+  addPolygons(data = ColMar, weight = 2, fill = F, opacity = 1) %>%
+  addPolygons(data = Col, weight = 2, fill = F, color = 'red', opacity = 1) %>%
+  addPolygons(data = lf.wdpa, stroke = F, fillColor = 'green', fillOpacity=.3, group = 'PNN') %>%
+  addPolygons(data = lf.cn, stroke = F, fillColor = 'blue', fillOpacity=.3, group = 'Comunidades Negras') %>%
+  addPolygons(data = lf.ri, stroke = F, fillColor = 'red', fillOpacity=.3, group = 'Resguardos Indigenas') %>%
+  setView(-75, 5.7, 6) %>% 
+  
+  # Layers control
+  addLayersControl(
+    overlayGroups = c('PNN','Comunidades Negras','Resguardos Indigenas'),
+    options = layersControlOptions(collapsed = FALSE))
+map
+
+```
+
+<br>
+
+# Resultados preliminares
+
+Tengo los mapas de riqueza de especies y números de especies en las áreas de estudio y también por categorìa de IUCN. También tengo para cada especie cuánto de su distribución está en las áreas de estudio (PNN, CN y RI).
+
+
+## Riqueza de spp total {.tabset .tabset-pills}
+
+```{r load rich1, include=FALSE}
+library(ggplot2)
+library(cowplot)
+library(fasterize)
+
+nnrich.all <- c("ACTINOPTERYGII","AMPHIBIA","CHONDRICHTHYES","MAMMALIA","MYXINI","REPTILIA","ALL")
+rich.all <- brick('data/03B_study_areas_richspp/richspp_all_gropus_COL.tif')
+names(rich.all) <- nnrich.all
+```
+
+Mapas de riqueza contando todas las especies (excepto aves)...
+
+
+```{r plotrichclass, results='asis'}
+plot_richclass <- function(i) {
+  p1 <- function() {
+    par(mar=c(0,0,0,0));
+    plot(ColMar, border=NA, add=F);
+    plot(rich.all[[i]], zlim=c(0,max(maxValue(rich.all[[i]]))), add=T);
+    plot(ColMar, border='blue', add=T);plot(Col, border='red', add=T)
+  }
+  sa1 <- function(studyarea) {
+    par(mar=c(0,0,0,0));
+    plot(ColMar, border=NA, add=F);
+    plot(fasterize(studyarea, rbase, field = abbreviate(nnrich.all[i]), fun = 'last'), zlim=c(0,max(maxValue(rich.all[[i]]))), add=T, legend=F);
+    plot(ColMar, border='blue', add=T);plot(Col, border='red', add=T)
+    }
+  p2 <- function() sa1(lf.wdpa)
+  p3 <- function() sa1(lf.cn)
+  p4 <- function() sa1(lf.ri)
+  
+  print(plot_grid(p1,p2,p3,p4, labels = c(nnrich.all[i], 'pnn','cn','ri')))
+}
+
+for(i in 1:length(nnrich.all)) {
+  cat('\n### ', nnrich.all[i],'\n')
+  plot_richclass(i)
+  cat('\n')
+}
+  
+
+```
+
+## Riqueza de spp por grupo {.tabset .tabset-pills}
+
+Mapas de riqueza de especies de cada grupo...
+
+
+```{r rich_maps2, results='asis'}
+nnclass <- c("ACTINOPTERYGII","AMPHIBIA","CHONDRICHTHYES","MAMMALIA","MYXINI","REPTILIA")
+ncat <- c('CR','EN','VU','NT','LC','DD')
+rctg <- lapply(list.files('data/03B_study_areas_richspp/', pattern = 'richspp_IUCNcateg', full.names = T), brick)
+names(rctg) <- nnclass
+rctg <- lapply(rctg, function(x) {names(x) <- ncat; x})
+
+plot_richcateg <- function(j,i) {
+  f1 <- function() {
+    par(mar=c(0,0,0,0));
+    plot(ColMar, border=NA, add=F);
+    plot(rctg[[j]][[i]], main=names(rctg[[j]])[i], zlim=c(0,max(maxValue(rctg[[j]][[i]]))), add=T);
+    plot(ColMar, border='blue', add=T);plot(Col, border='red', add=T)}
+  sa2 <- function(studyarea) {
+    par(mar=c(0,0,0,0));plot(ColMar, border=NA, add=F);
+    plot(fasterize(studyarea, rbase, field = paste0(abbreviate(nnclass[j]),'_',names(rctg[[j]])[i]), fun = 'last'), zlim=c(0,max(maxValue(rctg[[j]][[i]]))), add=T, legend=F);
+    plot(ColMar, border='blue', add=T);plot(Col, border='red', add=T)}
+  f2 <- function() sa2(lf.wdpa)
+  f3 <- function() sa2(lf.cn)
+  f4 <- function() sa2(lf.ri)
+  
+  print(plot_grid(f1,f2,f3,f4, labels = c(names(rctg[[j]])[i], 'pnn','cn','ri')))
+}
+
+for(j in 1:length(rctg)) {
+  cat('\n### ', names(rctg)[j],'{.tabset .tabset-pills}', '\n\n')
+  for(i in 1:nlayers(rctg[[j]])) {
+    cat('\n#### ', names(rctg[[j]])[i], '\n\n')
+    plot_richcateg(j,i)
+    cat('\n')
+  }
+  cat('\n')
+}
+```
+
+
+## Representatividad? {.tabset .tabset-pills}
+
+Por otro lado, saqué el area de la distribucion de las spp en Colombia, AP, RI, CN y las proporciones de: 1) el área de la distribución de la especie en Colombia respecto al total de la distribución (para ver endemismos) y 2) el área de la especie dentro de las areas de AP, CN y RI respecto a la distribución de la especie en Colombia.
+
+Ya tengo las tablas pero tengo es que ponerme a explorar los datos y pensar qué tipo de figuras pegan acá. Ideas?
+
+
+```{r loadp_tables}
+fc <- list.files('data/01B_IUCN_COL_byclass', pattern = '.csv', full.names = T)
+p_areas_spp <- lapply(fc, read.csv)
+p_areas_class <- lapply(p_areas_spp, function(x) data.frame(x[,c("family","sci_name")],
+                                                            endem_lvl=round(x$areaCM/x$areaT,2),
+                                                            p_area_AP=round(x$areaAP/x$areaCM,2),
+                                                            p_area_CN=round(x$areaCN/x$areaCM,2),
+                                                            p_area_RI=round(x$areaRI/x$areaCM,2)))
+```
+
+###  ACTINOPTERYGII 
+
+```{r}
+DT::datatable(p_areas_class[[1]])
+```
+
+###  AMPHIBIA 
+
+```{r}
+DT::datatable(p_areas_class[[2]])
+```
+
+###  CHONDRICHTHYES 
+
+```{r}
+DT::datatable(p_areas_class[[3]])
+```
+
+###  MAMMALIA 
+
+```{r}
+DT::datatable(p_areas_class[[4]])
+```
+
+###  MYXINI 
+
+```{r}
+DT::datatable(p_areas_class[[5]])
+```
+
+###  REPTILIA 
+
+```{r}
+DT::datatable(p_areas_class[[6]])
+```
+
+## Conclusión
+
+Ya están procesados los datos y algunos resultados ya listos. Falta es darle más a los de representatividad(?), ver bien datos la proporción del rango de distribución de las especues en las areas de estudio y hacer las figuras. También hace falta hacer todo para los datos de las aves e incorporarlos en los resultados.
+
+En fin, hablemos cuando vea esto a ver qué camino le damos.

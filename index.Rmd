@@ -2,7 +2,11 @@
 title: "Teaser Diversity PA Colombia"
 author: "Edgar Cifuentes"
 date: "18/02/2023"
-output: html_document
+output: 
+  html_document:
+    toc: yes
+    toc_float: true
+    toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -17,12 +21,12 @@ library(sf)      # Para trabajar con datos vectoriales
 Col <- st_simplify(st_read('data/00_colombia_admin/col_admbnda_adm0_mgn_itos_20200416'), 
                    dTolerance = 1000)
 Colbuff <- st_as_sf(st_buffer(st_geometry(Col),dist = 100000))
-PNN <- st_simplify(st_transform(st_read('data/02X_PNN_WDPA Colombia_old/pnn_wdpa_Col.shp'), 4326), dTolerance = 1000)
+PNN <- st_simplify(st_transform(st_read('data/03_study_areas/pnn_wdpa_Col.shp'), 4326), dTolerance = 1000)
 
 
-reptil.c <- st_read('data/01B_IUCN_COL/REPTILES_COL.shp')
-mammal.c <- st_read('data/01B_IUCN_COL/MAMMALS_COL.shp')
-amphib.c <- st_read('data/01B_IUCN_COL/AMPHIBIANS_COL.shp')
+reptil.c <- rbind(st_read('data/01A_IUCN_COL/REPTILES_PART1_COL.shp'),st_read('data/01A_IUCN_COL/REPTILES_PART2_COL.shp'))
+mammal.c <- st_read('data/01A_IUCN_COL/MAMMALS_COL.shp')
+amphib.c <- st_read('data/01A_IUCN_COL/AMPHIBIANS_COL.shp')
 
 ```
 

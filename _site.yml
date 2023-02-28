@@ -5,10 +5,10 @@ navbar:
   left:
     - text: "Teaser"
       href: index.html
-    # - text: "Field: AGB, BA & ρ"
-    #   href: 01_agb.html
-    # - text: "Lidar: TCH & Cover10"
-    #   href: 02_tch.html
+    - text: "Second round"
+      href: second_round.html
+    - text: ""
+      # href: 02_tch.html
     # # - text: "BA & ρ"
     #   href: 03_ba.html
     # - text: "Environ. Variables"

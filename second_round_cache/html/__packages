@@ -1,0 +1,9 @@
+base
+sp
+raster
+sf
+leaflet
+ggplot2
+cowplot
+fasterize
+DT

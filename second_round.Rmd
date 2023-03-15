@@ -268,15 +268,15 @@ DT::datatable(p_areas_class[[6]])
 DT::datatable(p_areas_class[[7]])
 ```
 
-## Conclusión
+# Comentarios
 
-### 28 feb 2023
+## 28 feb 2023
 
 Ya están procesados los datos y algunos resultados ya listos. Falta es darle más a los de representatividad(?), ver bien datos la proporción del rango de distribución de las especues en las areas de estudio y hacer las figuras. También hace falta hacer todo para los datos de las aves e incorporarlos en los resultados.
 
 En fin, hablemos cuando vea esto a ver qué camino le damos.
 
-### 15 mar 2023
+## 15 mar 2023
 
 Ya procesé los datos de aves y quedaron incorporados en esta página. 
 

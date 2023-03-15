@@ -6,7 +6,7 @@ output:
   html_document:
     toc: yes
     toc_float: true
-    toc_depth: 2
+    toc_depth: 3
 ---
 
 ```{r setup, include=FALSE}
@@ -76,13 +76,18 @@ table(iucn.COLcsv$class)
 
 ### Birdlife
 
-Ayer me llegaron los datos de BirdLife (>3GB). Estos datos los tengo en pausa porque me mandaron un geodatabase (.gdb) y eso es un rollo leerlos con mi versión de R. Toca con ArcGIS o QGIS y la verdad es que no los uso. Igual ya le estoy dando solución.
+Tengo los datos completos de BirdLife (>3GB). Ya los tengo para Colombia y quedaron procesados. En total hay estas especies de aves:
+
+```{r}
+table(read.csv('data/02B_BirdLife_COL_byclass/AVES_COL.csv')$class)
+```
+
 
 ## Areas de estudio
 
 ### Areas protegidas, Comunidades Negras y Resguardos Indígenas
 
-Del SINAP no me han enviado nada, entonces lo que hice fue usar los datos de [protected planet](https://www.protectedplanet.net/country/COL) WDPA para Colombia y seleccioné sólo los polígonos de Parques Nacionales Naturales.Estos datos son los que están en el link que nos envió Jose Manuel. Los polígonos están mas bien limpios entonces no hubo mucho que hacer más que validar unas geometrías. 
+Ta tengo los datos del SINAP pero no los he revisado aún. Lo que hice fue usar los datos de [protected planet](https://www.protectedplanet.net/country/COL) WDPA para Colombia y seleccioné sólo los polígonos de Parques Nacionales Naturales.Estos datos son los que están en el link que nos envió Jose Manuel. Los polígonos están mas bien limpios entonces no hubo mucho que hacer más que validar unas geometrías. 
 
 ```{r, include=FALSE}
 lf.wdpa <- st_read('data/03B_study_areas_richspp/wdpa_spp_rich_IUCNcateg.shp')
@@ -118,7 +123,7 @@ map
 Tengo los mapas de riqueza de especies y números de especies en las áreas de estudio y también por categorìa de IUCN. También tengo para cada especie cuánto de su distribución está en las áreas de estudio (PNN, CN y RI).
 
 
-## Riqueza de spp total {.tabset .tabset-pills}
+## Riqueza de spp por grupo {.tabset .tabset-pills}
 
 ```{r load rich1, include=FALSE}
 library(ggplot2)
@@ -129,8 +134,6 @@ nnrich.all <- c("ACTINOPTERYGII","AMPHIBIA","AVES","CHONDRICHTHYES","MAMMALIA","
 rich.all <- brick('data/03B_study_areas_richspp/richspp_all_gropus_COL.tif')
 names(rich.all) <- nnrich.all
 ```
-
-Mapas de riqueza contando todas las especies (excepto aves)...
 
 
 ```{r plotrichclass, results='asis'}
@@ -163,10 +166,7 @@ for(i in 1:length(nnrich.all)) {
 
 ```
 
-## Riqueza de spp por grupo {.tabset .tabset-pills}
-
-Mapas de riqueza de especies de cada grupo...
-
+## Riqueza de spp por categoría IUCN {.tabset .tabset-pills}
 
 ```{r rich_maps2, results='asis'}
 nnclass <- c("ACTINOPTERYGII","AMPHIBIA","AVES","CHONDRICHTHYES","MAMMALIA","MYXINI","REPTILIA")
@@ -206,14 +206,18 @@ for(j in 1:length(rctg)) {
 
 ## Representatividad? {.tabset .tabset-pills}
 
-Por otro lado, saqué el area de la distribucion de las spp en Colombia, AP, RI, CN y las proporciones de: 1) el área de la distribución de la especie en Colombia respecto al total de la distribución (para ver endemismos) y 2) el área de la especie dentro de las areas de AP, CN y RI respecto a la distribución de la especie en Colombia.
+Por otro lado, saqué el area de la distribucion de las spp en Colombia, AP, RI, CN y las proporciones de: 
+  
+  1) el área de la distribución de la especie en Colombia respecto al total de la distribución (para ver endemismos) y 
+  
+  2) el área de la especie dentro de las areas de AP, CN y RI respecto a la distribución de la especie en Colombia.
 
 Ya tengo las tablas pero tengo es que ponerme a explorar los datos y pensar qué tipo de figuras pegan acá. Ideas?
 
 
-```{r loadp_tables}
-fc <- list.files('data/01B_IUCN_COL_byclass', pattern = '.csv', full.names = T)
-list.files('data/01B_IUCN_COL_byclass', pattern = '.csv', full.names = T)
+```{r loadp_table}
+fc <- c(list.files('data/01B_IUCN_COL_byclass', pattern = '.csv', full.names = T),
+        list.files('data/02B_BirdLife_COL_byclass', pattern = '.csv', full.names = T))[c(1:2,7,3:6)]
 p_areas_spp <- lapply(fc, read.csv)
 p_areas_class <- lapply(p_areas_spp, function(x) data.frame(x[,c("family","sci_name")],
                                                             endem_lvl=round(x$areaCM/x$areaT,2),
@@ -224,48 +228,57 @@ p_areas_class <- lapply(p_areas_spp, function(x) data.frame(x[,c("family","sci_n
 
 ###  ACTINOPTERYGII 
 
-```{r}
+```{r cache=FALSE}
 DT::datatable(p_areas_class[[1]])
 ```
 
 ###  AMPHIBIA 
 
-```{r}
+```{r cache=FALSE}
 DT::datatable(p_areas_class[[2]])
 ```
 
 ###  AVES
 
-```{r}
-DT::datatable(p_areas_class[[2]])
+```{r cache=FALSE}
+DT::datatable(p_areas_class[[3]])
 ```
 
 ###  CHONDRICHTHYES 
 
-```{r}
-DT::datatable(p_areas_class[[3]])
+```{r cache=FALSE}
+DT::datatable(p_areas_class[[4]])
 ```
 
 ###  MAMMALIA 
 
-```{r}
-DT::datatable(p_areas_class[[4]])
+```{r cache=FALSE}
+DT::datatable(p_areas_class[[5]])
 ```
 
 ###  MYXINI 
 
-```{r}
-DT::datatable(p_areas_class[[5]])
+```{r cache=FALSE}
+DT::datatable(p_areas_class[[6]])
 ```
 
 ###  REPTILIA 
 
-```{r}
-DT::datatable(p_areas_class[[6]])
+```{r cache=FALSE}
+DT::datatable(p_areas_class[[7]])
 ```
 
 ## Conclusión
 
+### 28 feb 2023
+
 Ya están procesados los datos y algunos resultados ya listos. Falta es darle más a los de representatividad(?), ver bien datos la proporción del rango de distribución de las especues en las areas de estudio y hacer las figuras. También hace falta hacer todo para los datos de las aves e incorporarlos en los resultados.
 
 En fin, hablemos cuando vea esto a ver qué camino le damos.
+
+### 15 mar 2023
+
+Ya procesé los datos de aves y quedaron incorporados en esta página. 
+
+Queda pendiente filtrar más los datos para que sólo tengamos especies terrestres y las marinas las dejamos ahí pendientes para otro posible análisis.
+

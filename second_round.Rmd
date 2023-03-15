@@ -11,7 +11,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache = TRUE, warning = FALSE)
-knitr::opts_knit$set(root.dir = '~/Proj/08_Diversity_PA_COL')
+knitr::opts_knit$set(root.dir = '~/Proj/Rproj/08_Diversity_PA_COL')
 ```
 
 
@@ -125,7 +125,7 @@ library(ggplot2)
 library(cowplot)
 library(fasterize)
 
-nnrich.all <- c("ACTINOPTERYGII","AMPHIBIA","CHONDRICHTHYES","MAMMALIA","MYXINI","REPTILIA","ALL")
+nnrich.all <- c("ACTINOPTERYGII","AMPHIBIA","AVES","CHONDRICHTHYES","MAMMALIA","MYXINI","REPTILIA","ALL")
 rich.all <- brick('data/03B_study_areas_richspp/richspp_all_gropus_COL.tif')
 names(rich.all) <- nnrich.all
 ```
@@ -169,7 +169,7 @@ Mapas de riqueza de especies de cada grupo...
 
 
 ```{r rich_maps2, results='asis'}
-nnclass <- c("ACTINOPTERYGII","AMPHIBIA","CHONDRICHTHYES","MAMMALIA","MYXINI","REPTILIA")
+nnclass <- c("ACTINOPTERYGII","AMPHIBIA","AVES","CHONDRICHTHYES","MAMMALIA","MYXINI","REPTILIA")
 ncat <- c('CR','EN','VU','NT','LC','DD')
 rctg <- lapply(list.files('data/03B_study_areas_richspp/', pattern = 'richspp_IUCNcateg', full.names = T), brick)
 names(rctg) <- nnclass
@@ -213,6 +213,7 @@ Ya tengo las tablas pero tengo es que ponerme a explorar los datos y pensar qué
 
 ```{r loadp_tables}
 fc <- list.files('data/01B_IUCN_COL_byclass', pattern = '.csv', full.names = T)
+list.files('data/01B_IUCN_COL_byclass', pattern = '.csv', full.names = T)
 p_areas_spp <- lapply(fc, read.csv)
 p_areas_class <- lapply(p_areas_spp, function(x) data.frame(x[,c("family","sci_name")],
                                                             endem_lvl=round(x$areaCM/x$areaT,2),
@@ -228,6 +229,12 @@ DT::datatable(p_areas_class[[1]])
 ```
 
 ###  AMPHIBIA 
+
+```{r}
+DT::datatable(p_areas_class[[2]])
+```
+
+###  AVES
 
 ```{r}
 DT::datatable(p_areas_class[[2]])

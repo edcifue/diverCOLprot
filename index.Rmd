@@ -11,7 +11,7 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
-knitr::opts_knit$set(root.dir = '~/Proj/08_Diversity_PA_COL')
+knitr::opts_knit$set(root.dir = '~/Proj/Rproj/08_Diversity_PA_COL')
 ```
 
 

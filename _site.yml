@@ -9,7 +9,7 @@ navbar:
       href: second_round.html
     - text: "Some figures"
       href: some_figures.html
-    - text: ""
+    # - text: ""
     #   href: 03_ba.html
     # - text: "Environ. Variables"
     #   href: 04_env.html

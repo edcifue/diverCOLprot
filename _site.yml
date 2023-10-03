@@ -7,9 +7,9 @@ navbar:
       href: index.html
     - text: "Second round"
       href: second_round.html
+    - text: "Some figures"
+      href: some_figures.html
     - text: ""
-      # href: 02_tch.html
-    # # - text: "BA & ρ"
     #   href: 03_ba.html
     # - text: "Environ. Variables"
     #   href: 04_env.html

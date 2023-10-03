@@ -1,0 +1,115 @@
+---
+title: "Some figures"
+author: "Edgar Cifuentes"
+date: "03/10/2023"
+output: 
+  html_document:
+    toc: yes
+    toc_float: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE, warning = FALSE)
+knitr::opts_knit$set(root.dir = '~/Proj/Rproj/08_Diversity_PA_COL')
+```
+
+
+
+```{r}
+ACTI <- read.csv('data/01B_IUCN_COL_byclass/ACTINOPTERYGII_COL.csv')
+AMPH <- read.csv('data/01B_IUCN_COL_byclass/AMPHIBIA_COL.csv')
+MAMM <- read.csv('data/01B_IUCN_COL_byclass/MAMMALIA_COL.csv')
+REPT <- read.csv('data/01B_IUCN_COL_byclass/REPTILIA_COL.csv')
+AVES <- read.csv('data/02B_BirdLife_COL_byclass/AVES_COL.csv')
+
+y <- rbind(AMPH,AVES,MAMM,REPT)
+y <- merge(y, data.frame(category=c("CR","EN","VU","NT","LC","DD"), categ_n=1:6))
+# table(y$marine, y$terrestial)
+
+
+# table(y$areaC2==0, y$class)
+y <- y[y$areaC2!=0,]
+
+# table(y$pareaC>=1, y$class)
+e <- y[y$pareaC>=.9,]
+
+
+# hist(y$pareaC)
+# 
+# hist(y$pareaAP)
+# hist(e$pareaAP)
+# hist(y$pareaCN)
+# hist(e$pareaCN)
+# hist(y$pareaRI)
+# hist(e$pareaRI)
+
+
+points_categ <- function(df,tspp) {
+  for(k in c('pareaAP','pareaCN','pareaRI')) {
+    plot(NA, xlim=c(0,5), ylim=c(0,100), xaxt='n',
+         xlab='Taxonomic group', ylab='Percentage of range', main= paste(k,'-', tspp))
+    axis(1, at = 1:4, labels = abbreviate(sort(unique(y$class))), tick = F, pos = NA)
+    for(j in 1:4) {
+      x <- df[df$class==sort(unique(df$class))[j],]
+      for(i in 1:6) {
+        points(j + i/10-.35 + runif(nrow(x[x$categ_n==i,]),-.03,.03) , x[x$categ_n==i,k]*100, 
+               pch=16, col=rev(hcl.colors(6, palette = 'Zissou 1'))[i], cex=.6)
+        
+        points(j + i/10-.35, tapply(x[,k], x$categ_n, mean)[i]*100, pch=8)
+      }
+      lines(data.frame(x= j+c(-.35, .35) ,
+                       y= tapply(df[,k], df$class, mean)[j]*100))
+    }
+    legend('topleft', legend = c("CR","EN","VU","NT","LC","DD"), col = rev(hcl.colors(6, palette = 'Zissou 1')), pch = 16, bty = 'n', cex = .7)
+  }
+}
+
+points_categ(y, 'all species')
+points_categ(e, 'endemics')
+
+
+points_categ2 <- function(df, tspp) {
+  for(j in 1:4) {
+    plot(NA, xlim=c(0,4), ylim=c(0,100), xaxt='n',
+         xlab='', ylab='Percentage of range', main= paste(sort(unique(df$class))[j], '-', tspp))
+    axis(1, at = 1:3, labels = c('PNN','Comu.Negra','Resg.Indi'), tick = F, pos = NA)
+    x <- df[df$class==sort(unique(df$class))[j],]
+    for(k in 1:3) {
+      for(i in 1:6) {
+        points(k + i/10-.35 + runif(nrow(x[x$categ_n==i,]),-.03,.03) , x[x$categ_n==i,c('pareaAP','pareaCN','pareaRI')[k]]*100, 
+               pch=16, col=rev(hcl.colors(6, palette = 'Zissou 1'))[i], cex=.6)
+        
+        points(k + i/10-.35, tapply(x[,c('pareaAP','pareaCN','pareaRI')[k]], x$categ_n, mean)[i]*100, pch=8)
+      }
+      lines(data.frame(x= k+c(-.35, .35) ,
+                       y= tapply(df[,c('pareaAP','pareaCN','pareaRI')[k]], df$class, mean)[j]*100))
+    }
+    legend('topleft', legend = c("CR","EN","VU","NT","LC","DD"), col = rev(hcl.colors(6, palette = 'Zissou 1')), pch = 16, bty = 'n', cex = .7)
+  }
+}
+
+points_categ2(y, 'all species')
+points_categ2(e, 'endemics')
+
+
+cat('All spp \n')
+data.frame(Taxa= sort(unique(y$class)),
+           PNN = round(tapply(y$pareaAP,y$class, mean)*100,2),
+           Comu.Negra =round(tapply(y$pareaCN,y$class, mean)*100,2),
+           Resg.Indi =round(tapply(y$pareaRI,y$class, mean)*100,2), 
+           row.names = 1:4)
+
+
+cat('Endemics \n')
+
+data.frame(Taxa= sort(unique(e$class)),
+           PNN = round(tapply(e$pareaAP,e$class, mean)*100,2),
+           Comu.Negra =round(tapply(e$pareaCN,e$class, mean)*100,2),
+           Resg.Indi =round(tapply(e$pareaRI,e$class, mean)*100,2), 
+           row.names = 1:4)
+
+
+
+```
+

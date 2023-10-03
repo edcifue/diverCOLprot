@@ -6,7 +6,7 @@ output:
   html_document:
     toc: yes
     toc_float: true
-    toc_depth: 3
+    toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -89,10 +89,6 @@ points_categ2 <- function(df, tspp) {
   }
 }
 
-points_categ2(y, 'all species')
-points_categ2(e, 'endemics')
-
-
 cat('All spp \n')
 data.frame(Taxa= sort(unique(y$class)),
            PNN = round(tapply(y$pareaAP,y$class, mean)*100,2),
@@ -100,15 +96,17 @@ data.frame(Taxa= sort(unique(y$class)),
            Resg.Indi =round(tapply(y$pareaRI,y$class, mean)*100,2), 
            row.names = 1:4)
 
+points_categ2(y, 'all species')
+
 
 cat('Endemics \n')
-
 data.frame(Taxa= sort(unique(e$class)),
            PNN = round(tapply(e$pareaAP,e$class, mean)*100,2),
            Comu.Negra =round(tapply(e$pareaCN,e$class, mean)*100,2),
            Resg.Indi =round(tapply(e$pareaRI,e$class, mean)*100,2), 
            row.names = 1:4)
 
+points_categ2(e, 'endemics')
 
 
 ```

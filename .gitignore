@@ -4,3 +4,4 @@
 .Ruserdata
 index_cache/**
 *_cache/**
+*_files/**
